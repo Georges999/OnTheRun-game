@@ -1,0 +1,85 @@
+
+using UnityEngine;
+
+[RequireComponent(typeof(Rigidbody))]
+public class playerMotor : MonoBehaviour
+{
+
+    [SerializeField]
+    private Camera cam;
+    private Animator animator;
+
+    private Vector3 velocity = Vector3.zero;
+    private Vector3 Rotation = Vector3.zero;
+    private Vector3 camerarotation = Vector3.zero;
+    public float RotationAxis;
+    private Rigidbody rb;
+
+    void Start()
+    {
+        rb = GetComponent<Rigidbody>();
+        animator = GetComponent<Animator>();
+        
+    }
+    // Gets A MOVEMENT VECTOR
+    public void Move(Vector3 _velocity)
+    {
+        velocity = _velocity;
+        //animator.SetFloat("Forward", 5f);
+    }
+
+    public void Rotatecamera(Vector3 _camerarotation)
+    {
+        camerarotation = _camerarotation;
+
+    }
+    //run every physics iteration
+    void Update()
+    {
+        PerformMovement();
+        PerformRotation();
+        RotationAxis = rb.transform.eulerAngles.y;
+    }
+    public void Rotate(Vector3 _rotation)
+    {
+        Rotation = _rotation;
+        animator.SetFloat("Turn", RotationAxis);
+    }
+    void PerformMovement()
+    { 
+        if (velocity != Vector3.zero)
+        {
+            rb.MovePosition(rb.position + velocity * Time.deltaTime);
+        }
+        if (Input.GetKey(KeyCode.W))
+        {
+            animator.SetFloat("Forward", 1f);
+        }else if (Input.GetKey(KeyCode.A))
+        {
+            animator.SetFloat("Forward", -5f);
+
+        }else if (Input.GetKey(KeyCode.D))
+        {
+            animator.SetFloat("Forward", 5f);
+        }else if (Input.GetKey(KeyCode.S))
+        {
+            animator.SetFloat("Forward", 1f);
+        }else { animator.SetFloat("Forward", 0f); }
+
+        if (Input.GetKey(KeyCode.C))
+        {
+            animator.SetBool("Crouch", true);
+        } else  { animator.SetBool("Crouch", false); }
+    }
+
+    void PerformRotation()
+    {
+        rb.MoveRotation(rb.rotation * Quaternion.Euler(Rotation));
+        if (cam!=null)
+        {
+            cam.transform.Rotate(-camerarotation);
+        }
+
+    }
+
+}
