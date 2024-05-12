@@ -1,0 +1,54 @@
+
+using UnityEngine;
+[RequireComponent(typeof(playerMotor))]
+public class playerFPScontroller : MonoBehaviour
+{
+    [SerializeField]
+    public float speed = 1f;
+    [SerializeField]
+    public float looksensitivity = 3f;
+    
+    private playerMotor Motor;
+    private Animator animator;
+
+    private void Start()
+    {
+        Motor = GetComponent<playerMotor>();
+        animator = GetComponent<Animator>();
+    }
+    private void Update()
+    {
+        //calc movement velocity as a 3d vector
+
+        float movementX = Input.GetAxisRaw("Horizontal");
+        float movementZ = Input.GetAxisRaw("Vertical");
+
+        Vector3 moveHorizontal = transform.right * movementX; 
+        Vector3 moveVertical = transform.forward * movementZ; 
+        //final movement vector
+        Vector3 Velocity = (moveHorizontal + moveVertical).normalized * speed;
+
+        //Apply movement
+        Motor.Move(Velocity);
+
+
+        //calculate rotation as a 3d vector for turning around
+
+        float yRot = Input.GetAxisRaw("Mouse X");
+
+        Vector3 Rotation = new Vector3(0f, yRot, 0f) * looksensitivity;
+
+        //Apply rotation
+
+        Motor.Rotate(Rotation);
+
+        //calculate camera rotation as a 3d vector
+        float xRot = Input.GetAxisRaw("Mouse Y");
+
+        Vector3 CameraRotation= new Vector3(xRot, 0f, 0f) * looksensitivity;
+
+        //Apply cameraRotation
+
+        Motor.Rotatecamera(CameraRotation);
+    }
+}
