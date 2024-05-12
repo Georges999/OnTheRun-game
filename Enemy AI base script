@@ -1,0 +1,117 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.AI;
+
+public class EnemyAI : MonoBehaviour
+{
+    private Animator animator;
+    public Camera fpsCam;
+    public float damage = 10f;
+    public float range = 100f;
+    public NavMeshAgent agent;
+    public ParticleSystem muzzleflash;
+    public Transform player;
+
+    public LayerMask whatisground, whatisplayer;
+
+    //patrolling
+    public Vector3 walkpoint;
+    bool walkpointset;
+        public float walkpointrange;
+
+    //Attacking
+    public float timebetweenattacks;
+    bool alreadyattacked;
+    
+
+    //states
+    public float sightrange, attackrange;
+    public bool playerinsightrange, playerinattackrange;
+
+
+    private void Awake()
+    {
+        player = GameObject.Find("Player").transform;
+        agent = GetComponent<NavMeshAgent>();
+        animator = GetComponent<Animator>();
+      
+    }
+    private void Update()
+    {
+        //check for sight and range
+        playerinsightrange = Physics.CheckSphere(transform.position, sightrange, whatisplayer);
+        playerinattackrange = Physics.CheckSphere(transform.position, attackrange, whatisplayer);
+
+        if(!playerinsightrange && !playerinattackrange) { patrolling(); animator.SetBool("ismoving", true); animator.SetBool("isattacking", false);
+            agent.speed = 1f; }
+        if(playerinsightrange && !playerinattackrange) { chaseplayer();  animator.SetBool("isattacking", true);
+            agent.speed = 8f; }
+        if (playerinsightrange && playerinattackrange)
+        {  attackplayer(); animator.SetBool("isattacking", true); }
+        
+    }
+    private void patrolling()
+    {
+        if (!walkpointset) searchwalkpoint();
+
+        if (walkpointset) { agent.SetDestination(walkpoint); }
+
+        Vector3 distancetowalkpoint = transform.position - walkpoint;
+
+        //walkpoint reached 
+        if (distancetowalkpoint.magnitude < 1f) { walkpointset = false; }
+
+     
+
+    }
+    private void searchwalkpoint()
+    {
+        //calculate random point in range
+        float randomZ = Random.Range(-walkpointrange, walkpointrange);
+        float randomX = Random.Range(-walkpointrange, walkpointrange);
+
+        walkpoint = new Vector3(transform.position.x + randomX, transform.position.y, transform.position.z + randomZ);
+        if (Physics.Raycast(walkpoint, -transform.up, 2f, whatisground)) { walkpointset = true; }
+
+    }
+    private void chaseplayer()
+    {
+        agent.SetDestination(player.position);
+    }
+    private void attackplayer ()
+    {
+        //make sure enemy doesnt move
+        agent.SetDestination(transform.position);
+
+        transform.LookAt(player);
+        muzzleflash.Play();
+        RaycastHit hit;
+        if (Physics.Raycast(fpsCam.transform.position, fpsCam.transform.forward, out hit, range))
+        {
+            Debug.Log(hit.transform.name);
+
+            target Target = hit.transform.GetComponent<target>();
+            if (Target != null)
+            {
+                Target.TakeDamage(damage);
+            }
+        }
+
+        if (!alreadyattacked)
+        {
+
+            alreadyattacked = true;
+
+            Invoke(nameof(resetattack), timebetweenattacks);
+        }
+
+    }
+
+    private void resetattack()
+    {
+        alreadyattacked = false;
+    }
+
+
+}
